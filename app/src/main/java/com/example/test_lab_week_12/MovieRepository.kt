@@ -8,20 +8,29 @@ import kotlinx.coroutines.flow.flow
 class MovieRepository(private val movieService: MovieService) {
 
     private val apiKey = "be29b2d33e2cb83e63b3e355be495fce"
+    fun getFilteredMovies(year: String): Flow<List<Movie>> = flow {
+        try {
+            val response = movieService.getPopularMovies(apiKey)
 
-    // Flow to emit movie list
-    fun getPopularMoviesFlow(): Flow<List<Movie>> = flow {
-        val response = movieService.getPopularMovies(apiKey)
-        emit(response.results)
+            val filtered = response.results
+                .filter { it.releaseDate?.startsWith(year) == true }
+                .sortedByDescending { it.popularity }
+
+            emit(filtered)
+
+        } catch (e: Exception) {
+            // If error, emit empty list (ViewModel will emit error separately)
+            emit(emptyList())
+        }
     }
 
-    // Flow to emit errors
+    // Flow for error handling
     fun getErrorFlow(): Flow<String> = flow {
         try {
             movieService.getPopularMovies(apiKey)
             emit("")
         } catch (e: Exception) {
-            emit("An error occurred: ${e.message}")
+            emit("Error: ${e.message}")
         }
     }
 }

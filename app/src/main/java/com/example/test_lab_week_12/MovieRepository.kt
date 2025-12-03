@@ -1,32 +1,27 @@
 package com.example.test_lab_week_12
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import com.example.test_lab_week_12.api.MovieService
 import com.example.test_lab_week_12.model.Movie
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 
 class MovieRepository(private val movieService: MovieService) {
 
     private val apiKey = "be29b2d33e2cb83e63b3e355be495fce"
 
-    // LiveData that contains a list of movies
-    private val movieLiveData = MutableLiveData<List<Movie>>()
-    val movies: LiveData<List<Movie>> get() = movieLiveData
+    // Flow to emit movie list
+    fun getPopularMoviesFlow(): Flow<List<Movie>> = flow {
+        val response = movieService.getPopularMovies(apiKey)
+        emit(response.results)
+    }
 
-    // LiveData that contains an error message
-    private val errorLiveData = MutableLiveData<String>()
-    val error: LiveData<String> get() = errorLiveData
-
-    // fetch movies from the API
-    suspend fun fetchMovies() {
+    // Flow to emit errors
+    fun getErrorFlow(): Flow<String> = flow {
         try {
-            // get the list of popular movies from the API
-            val response = movieService.getPopularMovies(apiKey)
-            movieLiveData.postValue(response.results)
-        } catch (exception: Exception) {
-            // post the error message to errorLiveData
-            val msg = "An error occurred: ${exception.message}"
-            errorLiveData.postValue(msg)
+            movieService.getPopularMovies(apiKey)
+            emit("")
+        } catch (e: Exception) {
+            emit("An error occurred: ${e.message}")
         }
     }
 }
